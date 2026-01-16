@@ -3,14 +3,16 @@ const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('User', {
-  id: {
+  user_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+    field: 'user_id'
   },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: true
     }
@@ -24,36 +26,46 @@ const User = sequelize.define('User', {
       notEmpty: true
     }
   },
-  password: {
+  password_hash: {
     type: DataTypes.STRING,
     allowNull: true, // Allow null for users created without password initially
+    field: 'password_hash',
     validate: {
       len: [6, 255] // Minimum 6 characters if password is provided
     }
   },
-  type: {
+  role: {
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'clientadmin',
+    defaultValue: 'client_admin',
     validate: {
-      isIn: [['clientadmin', 'superadmin']]
+      isIn: [['superadmin', 'client_admin']]
     }
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'is_active'
   }
 }, {
   tableName: 'users',
-  timestamps: true, // This will create createdAt and updatedAt automatically
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  underscored: true,
   hooks: {
     // Hash password before creating or updating user
     beforeCreate: async (user) => {
-      if (user.password) {
+      if (user.password_hash) {
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
+        user.password_hash = await bcrypt.hash(user.password_hash, salt);
       }
     },
     beforeUpdate: async (user) => {
-      if (user.changed('password') && user.password) {
+      if (user.changed('password_hash') && user.password_hash) {
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
+        user.password_hash = await bcrypt.hash(user.password_hash, salt);
       }
     }
   }
@@ -61,16 +73,16 @@ const User = sequelize.define('User', {
 
 // Instance method to compare password
 User.prototype.comparePassword = async function(candidatePassword) {
-  if (!this.password) {
+  if (!this.password_hash) {
     return false;
   }
-  return await bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password_hash);
 };
 
 // Instance method to get user data without password
 User.prototype.toJSON = function() {
   const values = { ...this.get() };
-  delete values.password;
+  delete values.password_hash;
   return values;
 };
 

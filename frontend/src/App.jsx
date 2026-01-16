@@ -3,6 +3,9 @@ import { useEffect } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Clients from './pages/Clients'
+import InvoiceElements from './pages/InvoiceElements'
+import Invoices from './pages/Invoices'
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth()
@@ -76,6 +79,30 @@ function AppRoutes() {
         element={
           <PrivateRoute>
             <Dashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dashboard/clients"
+        element={
+          <PrivateRoute>
+            <Clients />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dashboard/invoice-elements"
+        element={
+          <PrivateRoute>
+            <InvoiceElements />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dashboard/invoices"
+        element={
+          <PrivateRoute>
+            <Invoices />
           </PrivateRoute>
         }
       />

@@ -2,18 +2,25 @@ const { sequelize } = require('../config/database');
 
 // Import models
 const User = require('./User');
-// const Invoice = require('./Invoice');
+const Client = require('./Client');
+const ClientConfig = require('./ClientConfig');
+const InvoiceElement = require('./InvoiceElement');
+const ClientConfigElement = require('./ClientConfigElement');
+const Invoice = require('./Invoice');
+const InvoiceElementValue = require('./InvoiceElementValue');
 
 // Initialize models
 const models = {
   User,
-  // Invoice,
+  Client,
+  ClientConfig,
+  InvoiceElement,
+  ClientConfigElement,
+  Invoice,
+  InvoiceElementValue,
   sequelize
 };
 
-// Define associations here
-// Example:
-// User.hasMany(Invoice);
-// Invoice.belongsTo(User);
+// Associations are defined in individual model files
 
 module.exports = models;

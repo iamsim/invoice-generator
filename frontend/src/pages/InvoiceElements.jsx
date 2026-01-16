@@ -1,4 +1,3 @@
-import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import {
   Card,
@@ -8,31 +7,25 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth()
-
-  if (!isAuthenticated) {
-    return null
-  }
-
+export default function InvoiceElements() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h2 className="text-3xl font-bold">Dashboard</h2>
+        <h2 className="text-3xl font-bold">Invoice Elements</h2>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || user?.email || 'User'}!
+          Manage invoice elements like line items, taxes, discounts, headers, and footers
         </p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Invoice Generator</CardTitle>
+          <CardTitle>Invoice Elements Management</CardTitle>
           <CardDescription>
-            Your invoice management dashboard
+            View and manage all invoice elements
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            This is your dashboard. Start creating invoices!
+            Invoice elements management interface will be implemented here.
           </p>
         </CardContent>
       </Card>

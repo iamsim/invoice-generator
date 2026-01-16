@@ -1,4 +1,3 @@
-import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import {
   Card,
@@ -8,31 +7,25 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth()
-
-  if (!isAuthenticated) {
-    return null
-  }
-
+export default function Clients() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h2 className="text-3xl font-bold">Dashboard</h2>
+        <h2 className="text-3xl font-bold">Clients</h2>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || user?.email || 'User'}!
+          Manage your clients and their information
         </p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Invoice Generator</CardTitle>
+          <CardTitle>Clients Management</CardTitle>
           <CardDescription>
-            Your invoice management dashboard
+            View and manage all clients
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            This is your dashboard. Start creating invoices!
+            Clients management interface will be implemented here.
           </p>
         </CardContent>
       </Card>
