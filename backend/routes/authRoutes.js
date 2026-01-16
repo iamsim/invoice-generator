@@ -1,19 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-
-// Mock user for development (replace with database query)
-const mockUser = {
-  id: 1,
-  email: 'demo@example.com',
-  password: '$2a$10$rOzJqZqZqZqZqZqZqZqZqOqZqZqZqZqZqZqZqZqZqZqZqZqZqZqZq', // password: "password"
-  name: 'Demo User'
-};
-
-// Hash password for demo (in production, this would be in database)
-// For demo purposes, we'll use a simple check
-const DEMO_PASSWORD = 'password';
+const { User } = require('../models');
 
 // Login endpoint
 router.post('/login', async (req, res) => {
@@ -26,30 +14,47 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Mock authentication (replace with database query)
-    // For demo: accept demo@example.com / password
-    if (email === 'demo@example.com' && password === DEMO_PASSWORD) {
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: mockUser.id, email: mockUser.email },
-        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-        { expiresIn: '7d' }
-      );
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
 
-      return res.json({
-        message: 'Login successful',
-        user: {
-          id: mockUser.id,
-          email: mockUser.email,
-          name: mockUser.name
-        },
-        token
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'Invalid email or password' 
       });
     }
 
-    // Invalid credentials
-    return res.status(401).json({ 
-      message: 'Invalid email or password' 
+    // Check if user has a password set
+    if (!user.password) {
+      return res.status(401).json({ 
+        message: 'Account not properly configured. Please contact administrator.' 
+      });
+    }
+
+    // Compare password
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: 'Invalid email or password' 
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, type: user.type },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        type: user.type
+      },
+      token
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -59,29 +64,77 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Register endpoint (placeholder)
+// Register endpoint
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, type } = req.body;
 
-    if (!email || !password || !name) {
+    // Validate required fields
+    if (!email || !name || !type) {
       return res.status(400).json({ 
-        message: 'Email, password, and name are required' 
+        message: 'Email, name, and type are required' 
       });
     }
 
-    // In production, you would:
-    // 1. Check if user already exists
-    // 2. Hash the password
-    // 3. Create user in database
-    // 4. Generate JWT token
-    // 5. Return user and token
+    // Validate type
+    if (!['clientadmin', 'superadmin'].includes(type)) {
+      return res.status(400).json({ 
+        message: 'Type must be either "clientadmin" or "superadmin"' 
+      });
+    }
 
-    return res.status(501).json({ 
-      message: 'Registration not implemented yet' 
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: 'User with this email already exists' 
+      });
+    }
+
+    // Create user (password will be hashed by the model hook)
+    const user = await User.create({
+      email,
+      name,
+      type,
+      password: password || null // Allow creating user without password
+    });
+
+    // Generate JWT token if password was provided
+    let token = null;
+    if (password) {
+      token = jwt.sign(
+        { userId: user.id, email: user.email, type: user.type },
+        process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+        { expiresIn: '7d' }
+      );
+    }
+
+    return res.status(201).json({
+      message: 'User created successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        type: user.type
+      },
+      token
     });
   } catch (error) {
     console.error('Register error:', error);
+    
+    // Handle Sequelize validation errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ 
+        message: error.errors.map(e => e.message).join(', ') 
+      });
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ 
+        message: 'User with this email already exists' 
+      });
+    }
+
     return res.status(500).json({ 
       message: 'Internal server error' 
     });
